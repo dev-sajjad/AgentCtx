@@ -29,6 +29,18 @@
     "agentctx": "dist/cli/index.js"
   },
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/index.d.ts",
+      "import": "./dist/mcp/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "engines": {
     "node": ">=20"
   },

@@ -44,10 +44,14 @@ Stack: Node.js 20+, TypeScript (strict, ESM), SQLite (`better-sqlite3`), Command
 
 ## Install
 
-Not yet published to npm — build from source:
+```bash
+npm install -g agentctx     # global CLI (once published)
+```
+
+Or build from source:
 
 ```bash
-git clone <your-fork-url> agentctx
+git clone https://github.com/dev-sajjad/AgentCtx agentctx
 cd agentctx
 npm install
 npm run build           # compiles to dist/
@@ -409,11 +413,15 @@ Logging verbosity: `LOG_LEVEL=silent|info|verbose|debug`.
 Every module is exported and usable directly from TypeScript/Node.
 
 ```ts
-import { MemoryStore } from 'agentctx/dist/memory/index.js';
-import { RoleManager } from 'agentctx/dist/roles/index.js';
-import { ContextCompiler } from 'agentctx/dist/compiler/index.js';
-import { BudgetTracker } from 'agentctx/dist/budget/index.js';
-import { ChainRunner, commandExecutor } from 'agentctx/dist/chains/index.js';
+import {
+  MemoryStore,
+  RoleManager,
+  ContextCompiler,
+  BudgetTracker,
+  ChainRunner,
+  commandExecutor,
+} from 'agentctx';
+// the MCP server lives on a subpath: import { startMcpServer } from 'agentctx/mcp';
 
 const role = new RoleManager().loadBuiltIn('backend-engineer');
 
