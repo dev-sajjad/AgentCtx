@@ -1,0 +1,9 @@
+{
+  "project_name": "agentctx",
+  "default_role": "backend-engineer",
+  "claudemd_sync": true,
+  "memory_layers": {
+    "short_term_ttl_hours": 8,
+    "mid_term_ttl_days": 90
+  }
+}

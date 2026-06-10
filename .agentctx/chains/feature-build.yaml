@@ -1,0 +1,22 @@
+name: Feature build pipeline
+steps:
+  - id: plan
+    role: backend-engineer
+    task: "Write a short technical plan for: {{input}}"
+    output_key: plan
+
+  - id: implement
+    role: backend-engineer
+    task: "Implement the following plan:\n{{plan}}"
+    context_includes:
+      - "src/**/*.ts"
+    output_key: implementation
+
+  - id: review
+    role: security-auditor
+    task: "Review this implementation for security issues:\n{{implementation}}"
+    output_key: review_notes
+
+  - id: test
+    role: qa-engineer
+    task: "Write tests for this implementation:\n{{implementation}}"

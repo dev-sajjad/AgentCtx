@@ -1,0 +1,72 @@
+{
+  "name": "agentctx",
+  "version": "0.1.0",
+  "description": "Agent Context Manager — manage context windows, memory, roles, token budgets, and multi-agent chains for Claude Code, Codex, Cursor, and any LLM-based agentic tool.",
+  "type": "module",
+  "license": "MIT",
+  "author": "alhasibsm@gmail.com",
+  "keywords": [
+    "ai",
+    "agents",
+    "llm",
+    "claude",
+    "claude-code",
+    "mcp",
+    "context",
+    "memory",
+    "tokens",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/agentctx.git"
+  },
+  "homepage": "https://github.com/your-org/agentctx#readme",
+  "bugs": {
+    "url": "https://github.com/your-org/agentctx/issues"
+  },
+  "bin": {
+    "agentctx": "dist/cli/index.js"
+  },
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/cli/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run build",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run verify"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "better-sqlite3": "^12.10.0",
+    "commander": "^14.0.3",
+    "glob": "^13.0.6",
+    "tiktoken": "^1.0.22",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.9.2",
+    "@typescript-eslint/eslint-plugin": "^8.61.0",
+    "@typescript-eslint/parser": "^8.61.0",
+    "eslint": "^8.57.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
