@@ -12,7 +12,7 @@ AgentCtx is a local-first context and agent manager for agentic coding tools (Cl
 Cursor, any LLM CLI). It manages context windows, persistent memory, role personas, token budgets,
 multi-agent chains, and prompt inspection — exposed as both a CLI and an MCP server.
 
-Stack: Node.js 18+, TypeScript (strict, ESM/NodeNext), SQLite (`better-sqlite3`), Commander.js,
+Stack: Node.js 20+, TypeScript (strict, ESM/NodeNext), SQLite (`better-sqlite3`), Commander.js,
 Zod, tiktoken, glob, `@modelcontextprotocol/sdk`, Vitest.
 
 ---
@@ -163,13 +163,16 @@ tests/             mirrors src/ (13 test files)
 works end-to-end. The CLI has no remaining stubs. The core is feature-complete and committed to git
 (`main`, two commits).
 
-Last completed: vector search (zero-dep hashing embedder behind the `vector_search` flag).
+Last completed: pushed to GitHub; fixed the CI matrix after the first run went red on Node 18.
 
-Open thread — **push to remote**: the repo is at `https://github.com/dev-sajjad/AgentCtx.git`.
-Commits exist locally; pushing with `git remote add origin <url> && git push -u origin main`. Once
-pushed, CI runs on GitHub Actions.
+Pushed to `https://github.com/dev-sajjad/AgentCtx` (`main`). The first CI run **failed on Node 18**
+(Node 20 and 22 were green): the modern toolchain requires Node 20+ — vitest 4 (`^20||^22||>=24`),
+vite 8 (`^20.19||>=22.12`), and better-sqlite3 12 (`20.x+`). Fixed by requiring `node >=20`
+(package.json `engines`) and testing on Node 20/22 only. Node 18 is EOL (April 2025).
 
 Transient issues encountered and resolved (not currently failing):
+- CI red on Node 18 — the dev/runtime toolchain dropped Node 18; required Node 20+ instead
+  (engines + CI matrix). Node 20/22 passed.
 - The Bash working directory was once left inside `node_modules/...` after inspecting the MCP SDK,
   which made `npm run typecheck` report "Missing script". Fixed by `cd` back to the project root.
 - `eslint .` passed vacuously (eslint 8 lints `.js` only by default); fixed to `eslint . --ext .ts`.

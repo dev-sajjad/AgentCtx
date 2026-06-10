@@ -37,7 +37,7 @@ them:
 Core is feature-complete and tested (73 tests): memory, roles, context compiler, token budget,
 debug inspector, MCP server (10 tools), and multi-agent chains with real agent execution.
 
-Stack: Node.js 18+, TypeScript (strict, ESM), SQLite (`better-sqlite3`), Commander.js, Zod, tiktoken,
+Stack: Node.js 20+, TypeScript (strict, ESM), SQLite (`better-sqlite3`), Commander.js, Zod, tiktoken,
 `@modelcontextprotocol/sdk`, Vitest.
 
 ---
