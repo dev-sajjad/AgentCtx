@@ -19,11 +19,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dev-sajjad/agentctx.git"
+    "url": "git+https://github.com/dev-sajjad/AgentCtx.git"
   },
-  "homepage": "https://github.com/dev-sajjad/agentctx#readme",
+  "homepage": "https://github.com/dev-sajjad/AgentCtx#readme",
   "bugs": {
-    "url": "https://github.com/dev-sajjad/agentctx/issues"
+    "url": "https://github.com/dev-sajjad/AgentCtx/issues"
   },
   "bin": {
     "agentctx": "dist/cli/index.js"

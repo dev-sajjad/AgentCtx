@@ -54,16 +54,17 @@ Zod, tiktoken, glob, `@modelcontextprotocol/sdk`, Vitest.
 src/
   cli/         Commander entry — all commands wired
   compiler/    Context compiler (glob → score → pack)
-  memory/      SQLite store (db.ts singleton/migrate + MemoryStore)
+  memory/      SQLite store (db.ts + MemoryStore + vector.ts VectorIndex)
   roles/       RoleManager (built-in + project role resolution)
-  chains/      ChainLoader, ChainRunner, executors (claude CLI / command)
+  chains/      ChainLoader, ChainRunner, executors (claude / command / ollama)
   budget/      BudgetTracker (tiktoken breakdown + warnings)
   debug/       DebugStore (persist runs) + DebugInspector (format/diff)
   mcp/         MCP server (index.ts) + tool handlers (tools.ts)
-  shared/      types.ts, logger.ts, utils.ts, tokens.ts, config.ts
+  integrations/ Cursor/Codex rules exporters
+  shared/      types.ts, logger.ts, utils.ts, tokens.ts, config.ts, global-config.ts
 templates/roles/   3 built-in role YAMLs
 docs/specs/        context-compiler, memory-store, token-budget
-tests/             mirrors src/ (10 test files)
+tests/             mirrors src/ (13 test files)
 .agentctx/         config.json, chains/feature-build.yaml
 ```
 
@@ -118,12 +119,30 @@ tests/             mirrors src/ (10 test files)
   auth — zero config) and `commandExecutor` (any agent CLI, prompt via stdin/arg). Runner now
   catches executor failures (fail-fast + record). Wired CLI `chain run --executor claude`.
 
-### 8. CLI memory/role + init  ← most recent
+### 8. CLI memory/role + init
 - Wired `init` (scaffold `.agentctx/` + starter CLAUDE.md, idempotent), `memory add/search/list`,
   `role use/list/install`. Removed all CLI stubs.
 - `RoleManager.resolve(name, projectRoot)` + `listProject` — project `.agentctx/roles/` shadow
   built-ins, applied across compile/chains/MCP. `role use` persists `default_role` to config;
   `role install` copies a local YAML into the project.
+
+### 9. Global config + integrations + lint + ship
+- `shared/global-config.ts`: reads `~/.agentctx/global-config.json` (default_model,
+  token_warning_threshold, vector_search…); `budget` defaults model+threshold from it; new
+  `agentctx config show`.
+- `integrations/index.ts`: real exporters — `agentctx export cursor` → `.cursorrules`,
+  `export codex` → `AGENTS.md` (role prompt + relevant memory). `ollamaExecutor` preset added.
+- Lint made meaningful (`eslint . --ext .ts`, 0/0) + `verify` script
+  (`typecheck && lint && test && build`).
+- Shipped: `git init` (`main`, initial commit), `.github/workflows/ci.yml` (node 18/20/22),
+  `LICENSE` (MIT), npm publish metadata + `prepare`/`prepublishOnly`.
+
+### 10. Vector search  ← most recent
+- `memory/vector.ts`: zero-dependency `hashingEmbedder` (feature hashing, L2-normalized,
+  injectable), embeddings stored in SQLite `memory_embeddings`, `cosine` ranking via `VectorIndex`.
+- Behind the `vector_search` global-config flag: CLI `memory add` indexes, `memory search` ranks by
+  similarity, `memory reindex` backfills. Keyword `LIKE` remains the default. LanceDB / a real
+  semantic embedder can replace the layer via the same seam.
 
 ---
 
@@ -131,25 +150,29 @@ tests/             mirrors src/ (10 test files)
 
 | Gate | Result |
 |---|---|
-| `npm run typecheck` | clean |
-| `npm test` | **73 passing** (10 files) |
+| `npm run verify` (typecheck + lint + test + build) | green |
+| `npm test` | **86 passing** (13 files) |
 | `npm run build` | 0 errors |
-| live CLI/MCP smoke | init→memory→role, compile, budget, debug, chain (dry-run + claude), MCP tools/list+call — all working |
+| live CLI/MCP smoke | init→memory(+vector)→role/export, compile, budget, debug, chain (dry-run + claude), MCP tools/list+call — all working |
 
 ---
 
 ## Current status & active work
 
-**No active failure.** As of the last session, typecheck, all 73 tests, and the build are green, and
-the full first-run flow works end-to-end. The CLI has no remaining stubs.
+**No active failure.** typecheck, all 86 tests, and the build are green; the full first-run flow
+works end-to-end. The CLI has no remaining stubs. The core is feature-complete and committed to git
+(`main`, two commits).
 
-Last completed: wiring CLI `memory`/`role` and adding `init` (+ project-aware role resolution).
+Last completed: vector search (zero-dep hashing embedder behind the `vector_search` flag).
+
+Open thread — **push to remote**: the repo is at `https://github.com/dev-sajjad/AgentCtx.git`.
+Commits exist locally; pushing with `git remote add origin <url> && git push -u origin main`. Once
+pushed, CI runs on GitHub Actions.
 
 Transient issues encountered and resolved (not currently failing):
 - The Bash working directory was once left inside `node_modules/...` after inspecting the MCP SDK,
   which made `npm run typecheck` report "Missing script". Fixed by `cd` back to the project root.
-- `package.json` was reformatted/pinned externally during a dependency install (deps now pinned,
-  e.g. zod ^4.4.3, typescript ^6, eslint ^8); scripts intact, taken as intentional.
+- `eslint .` passed vacuously (eslint 8 lints `.js` only by default); fixed to `eslint . --ext .ts`.
 
 If a failure appears next session, record it here with: the command, the exact error output, and the
 hypothesis being tested.
@@ -158,13 +181,13 @@ hypothesis being tested.
 
 ## Remaining work (extensions, not blockers)
 
-- Global config `~/.agentctx/global-config.json` (`default_model`, `token_warning_threshold`).
+- Push to the GitHub remote, then enable CI / consider `npm publish` (gated by `verify`).
 - CLAUDE.md manager: only `claudemd_read` + the init scaffold exist; `edit`/`validate`/`sync` not built.
-- Vector search (LanceDB), flagged off via `vector_search`.
 - `debug replay` / `debug export`.
 - Remote role-registry install (`role install agentctx/<name>`); today only local `.yaml` paths.
-- Integration adapters (Codex, Cursor) under `src/integrations/` (currently a stub).
-- Lint: `.eslintrc.json` present but lint isn't part of the verify gates.
+- Optional vector upgrades: a real semantic embedder (transformers.js) and/or a LanceDB backend —
+  both plug into the existing `Embedder` / `VectorIndex` seam.
+- MCP `memory_save`/`memory_search` could honour `vector_search` too (CLI does; MCP stays keyword).
 
 ---
 
