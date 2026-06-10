@@ -29,6 +29,11 @@ export function migrate(db: DatabaseType): void {
     );
     CREATE INDEX IF NOT EXISTS idx_memory_project ON memory (project);
     CREATE INDEX IF NOT EXISTS idx_memory_project_layer ON memory (project, layer);
+
+    CREATE TABLE IF NOT EXISTS memory_embeddings (
+      id TEXT PRIMARY KEY,
+      vector TEXT NOT NULL
+    );
   `);
 }
 

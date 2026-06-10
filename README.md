@@ -198,6 +198,15 @@ $ agentctx memory search "auth jwt"
 [mid] API uses JWT on port 3000  (auth, api)
 ```
 
+**Vector search (optional).** Set `"vector_search": true` in `~/.agentctx/global-config.json` to rank
+by embedding similarity instead of keyword `LIKE` — it surfaces relevant entries even when the query
+shares no literal words. The default embedder is a zero-dependency local hashing embedder (fully
+offline; pluggable for a real semantic model). Backfill existing entries once with:
+
+```bash
+agentctx memory reindex
+```
+
 ### Roles
 
 A role template is a YAML persona with a system prompt, context globs, and a token budget. Three are

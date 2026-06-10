@@ -127,3 +127,6 @@ export class MemoryStore {
     return info.changes;
   }
 }
+
+export { getDefaultDb, createDb, migrate, resolveDbPath } from './db.js';
+export { VectorIndex, hashingEmbedder, cosine, type Embedder } from './vector.js';

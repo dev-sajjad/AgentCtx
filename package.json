@@ -4,7 +4,7 @@
   "description": "Agent Context Manager — manage context windows, memory, roles, token budgets, and multi-agent chains for Claude Code, Codex, Cursor, and any LLM-based agentic tool.",
   "type": "module",
   "license": "MIT",
-  "author": "alhasibsm@gmail.com",
+  "author": "https://github.com/dev-sajjad",
   "keywords": [
     "ai",
     "agents",
@@ -19,11 +19,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-org/agentctx.git"
+    "url": "git+https://github.com/dev-sajjad/agentctx.git"
   },
-  "homepage": "https://github.com/your-org/agentctx#readme",
+  "homepage": "https://github.com/dev-sajjad/agentctx#readme",
   "bugs": {
-    "url": "https://github.com/your-org/agentctx/issues"
+    "url": "https://github.com/dev-sajjad/agentctx/issues"
   },
   "bin": {
     "agentctx": "dist/cli/index.js"

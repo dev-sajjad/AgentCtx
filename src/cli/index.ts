@@ -5,7 +5,7 @@ import { Command } from 'commander';
 import { logger } from '../shared/logger.js';
 import { RoleManager } from '../roles/index.js';
 import { ContextCompiler } from '../compiler/index.js';
-import { MemoryStore } from '../memory/index.js';
+import { MemoryStore, VectorIndex, getDefaultDb } from '../memory/index.js';
 import { BudgetTracker } from '../budget/index.js';
 import { DebugStore, DebugInspector } from '../debug/index.js';
 import { ChainRunner, ChainLoader, claudeCliExecutor, type StepExecutor } from '../chains/index.js';
@@ -378,6 +378,9 @@ function runMemoryAdd(content: string, options: MemoryAddOptions): void {
     project,
     expires_at: expiryForLayer(layer, config),
   });
+  if (loadGlobalConfig().vector_search) {
+    new VectorIndex(getDefaultDb()).indexEntry(entry);
+  }
   logger.info(
     `saved ${entry.id} (layer=${layer}, project=${project}${tags.length ? `, tags=${tags.join(',')}` : ''})`,
   );
@@ -390,7 +393,9 @@ function runMemorySearch(query: string, options: MemorySearchOptions): void {
   const project = resolveProjectName(root, config);
   const limit = parseNumber(options.limit) ?? 10;
 
-  const results = new MemoryStore().search(query, project, limit);
+  const results = loadGlobalConfig().vector_search
+    ? new VectorIndex(getDefaultDb()).search(query, project, limit)
+    : new MemoryStore().search(query, project, limit);
   if (results.length === 0) {
     logger.info(`no memory entries match "${query}"`);
     return;
@@ -398,6 +403,16 @@ function runMemorySearch(query: string, options: MemorySearchOptions): void {
   for (const e of results) {
     logger.info(`[${e.layer}] ${e.content}${e.tags.length ? `  (${e.tags.join(', ')})` : ''}`);
   }
+}
+
+/** `agentctx memory reindex` — rebuild vector embeddings for this project. */
+function runMemoryReindex(): void {
+  const root = process.cwd();
+  const config = loadProjectConfig(root);
+  const project = resolveProjectName(root, config);
+  const entries = new MemoryStore().list(project);
+  const n = new VectorIndex(getDefaultDb()).reindex(entries);
+  logger.info(`reindexed ${n} memory entries for "${project}"`);
 }
 
 /** `agentctx memory list`. */
@@ -579,6 +594,13 @@ memory
   .option('-l, --layer <layer>', 'filter by memory layer (short | mid | long)')
   .action((options: MemoryListOptions): void => {
     runMemoryList(options);
+  });
+
+memory
+  .command('reindex')
+  .description('rebuild vector embeddings for this project (used when vector_search is on)')
+  .action((): void => {
+    runMemoryReindex();
   });
 
 // ---------------------------------------------------------------------------
