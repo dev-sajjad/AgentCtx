@@ -137,12 +137,25 @@ tests/             mirrors src/ (13 test files)
 - Shipped: `git init` (`main`, initial commit), `.github/workflows/ci.yml` (node 18/20/22),
   `LICENSE` (MIT), npm publish metadata + `prepare`/`prepublishOnly`.
 
-### 10. Vector search  ← most recent
+### 10. Vector search
 - `memory/vector.ts`: zero-dependency `hashingEmbedder` (feature hashing, L2-normalized,
   injectable), embeddings stored in SQLite `memory_embeddings`, `cosine` ranking via `VectorIndex`.
 - Behind the `vector_search` global-config flag: CLI `memory add` indexes, `memory search` ranks by
   similarity, `memory reindex` backfills. Keyword `LIKE` remains the default. LanceDB / a real
   semantic embedder can replace the layer via the same seam.
+
+### 11. Publish + automated release  ← most recent
+- Added a public API barrel `src/index.ts` (so `main` resolves) plus `types` and an `exports` map
+  (root + `agentctx/mcp` subpath, keeping the MCP SDK out of the main entry).
+- Published to npm as **`@dev-sajjad/agentctx`** — the bare name `agentctx` was rejected as too
+  similar to an existing `agent-ctx`, so the package is scoped (`publishConfig.access=public`). The
+  CLI command stays `agentctx` (bin name). `0.1.0` was published manually.
+- Automated release via **OIDC trusted publishing**: `.github/workflows/publish.yml` triggers on a
+  `v*` tag, runs `verify`, then `npm publish` — no `NPM_TOKEN`, short-lived creds, signed provenance.
+  Verified end-to-end at **v0.1.1**. Release flow: `npm version patch && git push --follow-tags`.
+- CI matrix fixed to Node 20/22; README gained a Releasing section.
+- JSR evaluated and **skipped**: JSR's "slow types" rule flags every exported Zod schema/const, and
+  native `better-sqlite3` can't run on Deno — wrong fit for a Node CLI. `jsr.json` removed.
 
 ---
 
@@ -153,6 +166,8 @@ tests/             mirrors src/ (13 test files)
 | `npm run verify` (typecheck + lint + test + build) | green |
 | `npm test` | **86 passing** (13 files) |
 | `npm run build` | 0 errors |
+| npm | **`@dev-sajjad/agentctx@0.1.1`** published via OIDC (provenance) |
+| GitHub | CI green on Node 20 & 22 (`ci.yml`); `publish.yml` on `v*` tags |
 | live CLI/MCP smoke | init→memory(+vector)→role/export, compile, budget, debug, chain (dry-run + claude), MCP tools/list+call — all working |
 
 ---
@@ -160,19 +175,20 @@ tests/             mirrors src/ (13 test files)
 ## Current status & active work
 
 **No active failure.** typecheck, all 86 tests, and the build are green; the full first-run flow
-works end-to-end. The CLI has no remaining stubs. The core is feature-complete and committed to git
-(`main`, two commits).
+works end-to-end. The CLI has no remaining stubs. The package is **published to npm as
+`@dev-sajjad/agentctx@0.1.1`** and released automatically from CI via OIDC trusted publishing. Repo:
+`https://github.com/dev-sajjad/AgentCtx` (`main`, CI green on Node 20/22). No secrets in CI; the
+setup-time leaked token has been deleted.
 
-Last completed: pushed to GitHub; fixed the CI matrix after the first run went red on Node 18.
-
-Pushed to `https://github.com/dev-sajjad/AgentCtx` (`main`). The first CI run **failed on Node 18**
-(Node 20 and 22 were green): the modern toolchain requires Node 20+ — vitest 4 (`^20||^22||>=24`),
-vite 8 (`^20.19||>=22.12`), and better-sqlite3 12 (`20.x+`). Fixed by requiring `node >=20`
-(package.json `engines`) and testing on Node 20/22 only. Node 18 is EOL (April 2025).
+Last completed: npm publish + OIDC release pipeline (v0.1.1); evaluated and skipped JSR.
 
 Transient issues encountered and resolved (not currently failing):
-- CI red on Node 18 — the dev/runtime toolchain dropped Node 18; required Node 20+ instead
-  (engines + CI matrix). Node 20/22 passed.
+- CI red on Node 18 — the dev/runtime toolchain dropped Node 18; required Node 20+ (engines + matrix).
+  vitest 4 / vite 8 / better-sqlite3 12 all need Node 20+. Node 18 is EOL.
+- npm rejected the bare name `agentctx` (too similar to existing `agent-ctx`) → scoped to
+  `@dev-sajjad/agentctx` with `publishConfig.access=public`.
+- First publish blocked by 2FA (E403 / EOTP) → moved to OIDC trusted publishing (no token, no OTP).
+- An npm token was pasted in plaintext during setup → since deleted; OIDC needs none.
 - The Bash working directory was once left inside `node_modules/...` after inspecting the MCP SDK,
   which made `npm run typecheck` report "Missing script". Fixed by `cd` back to the project root.
 - `eslint .` passed vacuously (eslint 8 lints `.js` only by default); fixed to `eslint . --ext .ts`.
@@ -184,7 +200,6 @@ hypothesis being tested.
 
 ## Remaining work (extensions, not blockers)
 
-- Push to the GitHub remote, then enable CI / consider `npm publish` (gated by `verify`).
 - CLAUDE.md manager: only `claudemd_read` + the init scaffold exist; `edit`/`validate`/`sync` not built.
 - `debug replay` / `debug export`.
 - Remote role-registry install (`role install agentctx/<name>`); today only local `.yaml` paths.
