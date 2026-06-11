@@ -34,7 +34,7 @@ them:
 
 ### Status
 
-Core is feature-complete and tested (73 tests): memory, roles, context compiler, token budget,
+Core is feature-complete and tested (86 tests): memory, roles, context compiler, token budget,
 debug inspector, MCP server (10 tools), and multi-agent chains with real agent execution.
 
 Stack: Node.js 20+, TypeScript (strict, ESM), SQLite (`better-sqlite3`), Commander.js, Zod, tiktoken,
@@ -453,21 +453,43 @@ const runner = new ChainRunner({
 ```bash
 npm run build       # tsc -> dist/
 npm run dev         # tsx watch
-npm test            # vitest (73 tests)
-npm run typecheck   # tsc --noEmit (incl. tests)
-npm run lint        # eslint
+npm test            # vitest (86 tests)
+npm run typecheck   # tsc -p tsconfig.test.json (incl. tests)
+npm run lint        # eslint . --ext .ts
+npm run verify      # typecheck + lint + test + build (the full gate)
 ```
 
 See [progress.md](progress.md) for the build log and design decisions.
 
 ---
 
+## Releasing
+
+Releases publish to npm from CI via **OpenID Connect (OIDC) trusted publishing** — no `NPM_TOKEN`
+secret, short-lived credentials, and a signed provenance attestation on every release.
+
+Pushing a `v*` tag triggers [`.github/workflows/publish.yml`](.github/workflows/publish.yml), which
+runs the full `verify` gate and then `npm publish`:
+
+```bash
+npm version patch        # bump 0.1.x — also makes a commit + a v0.1.x git tag
+git push --follow-tags   # the tag push triggers the publish workflow
+```
+
+Use `npm version minor` / `major` as appropriate. This relies on the npm package's **Trusted
+Publisher** being configured once (npmjs.com → package → Settings) to point at
+`dev-sajjad/AgentCtx` with workflow `publish.yml`. Separately, [`ci.yml`](.github/workflows/ci.yml)
+runs typecheck + lint + test + build on every push and PR (Node 20 and 22).
+
+---
+
 ## Roadmap
 
-Built: memory · roles · context compiler · token budget · debug inspector · MCP server · chains · real agent execution · CLI.
+Built: memory · roles · context compiler · token budget · debug inspector · MCP server · chains ·
+real agent execution · vector search · global config · Cursor/Codex export · CLI.
 
-Planned: global config, CLAUDE.md manager (`edit`/`validate`/`sync`), vector search (LanceDB),
-`debug replay`/`export`, remote role registry, Codex/Cursor adapters.
+Planned: CLAUDE.md manager (`edit`/`validate`/`sync`), `debug replay`/`export`, remote role registry,
+semantic embedder (transformers.js) + LanceDB vector backend.
 
 ---
 
