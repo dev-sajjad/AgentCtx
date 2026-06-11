@@ -1,6 +1,9 @@
 {
-  "name": "agentctx",
+  "name": "@dev-sajjad/agentctx",
   "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Agent Context Manager — manage context windows, memory, roles, token budgets, and multi-agent chains for Claude Code, Codex, Cursor, and any LLM-based agentic tool.",
   "type": "module",
   "license": "MIT",

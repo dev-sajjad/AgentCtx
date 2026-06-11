@@ -45,7 +45,7 @@ Stack: Node.js 20+, TypeScript (strict, ESM), SQLite (`better-sqlite3`), Command
 ## Install
 
 ```bash
-npm install -g agentctx     # global CLI (once published)
+npm install -g @dev-sajjad/agentctx     # global CLI; provides the `agentctx` command
 ```
 
 Or build from source:
@@ -420,8 +420,8 @@ import {
   BudgetTracker,
   ChainRunner,
   commandExecutor,
-} from 'agentctx';
-// the MCP server lives on a subpath: import { startMcpServer } from 'agentctx/mcp';
+} from '@dev-sajjad/agentctx';
+// the MCP server lives on a subpath: import { startMcpServer } from '@dev-sajjad/agentctx/mcp';
 
 const role = new RoleManager().loadBuiltIn('backend-engineer');
 
