@@ -1,8 +1,6 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
+import { ClaudeMdManager } from '../claudemd/index.js';
 import type { MemoryStore } from '../memory/index.js';
 import type { RoleManager } from '../roles/index.js';
 import type { ContextCompiler } from '../compiler/index.js';
@@ -171,9 +169,10 @@ export function createHandlers(deps: McpDeps): AgentCtxHandlers {
     },
 
     claudemdRead() {
-      const path = join(deps.projectRoot, 'CLAUDE.md');
-      if (!existsSync(path)) return errorResult('No CLAUDE.md found in the project root.');
-      return text(readFileSync(path, 'utf-8'));
+      const mgr = new ClaudeMdManager(deps.projectRoot);
+      const content = mgr.read();
+      if (content === null) return errorResult('No CLAUDE.md found in the project root.');
+      return text(content);
     },
 
     async chainRun(args) {

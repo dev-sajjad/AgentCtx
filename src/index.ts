@@ -15,5 +15,6 @@ export * from './roles/index.js';
 export * from './compiler/index.js';
 export * from './budget/index.js';
 export * from './debug/index.js';
+export * from './claudemd/index.js';
 export * from './chains/index.js';
 export * from './integrations/index.js';

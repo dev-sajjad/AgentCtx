@@ -8,6 +8,15 @@ import { ContextCompiler } from '../compiler/index.js';
 import { MemoryStore, VectorIndex, getDefaultDb } from '../memory/index.js';
 import { BudgetTracker } from '../budget/index.js';
 import { DebugStore, DebugInspector } from '../debug/index.js';
+import {
+  ClaudeMdManager,
+  validateClaudeMd,
+  suggestForClaudeMd,
+  applySuggestions,
+  upsertSection,
+  formatValidation,
+  formatSuggestions,
+} from '../claudemd/index.js';
 import { ChainRunner, ChainLoader, claudeCliExecutor, type StepExecutor } from '../chains/index.js';
 import { startMcpServer } from '../mcp/index.js';
 import { countTokens } from '../shared/tokens.js';
@@ -540,6 +549,78 @@ function runExport(tool: string, options: ExportOptions): void {
   logger.info(`wrote ${tool} rules → ${path} (role: ${role.name}, ${notes.length} memory notes)`);
 }
 
+/** Resolve the CLAUDE.md manager; logs + returns null if the file is missing. */
+function openClaudemd(): ClaudeMdManager | null {
+  const mgr = new ClaudeMdManager(process.cwd());
+  if (!mgr.exists()) {
+    logger.error('no CLAUDE.md in the project root — run `agentctx init` first');
+    process.exitCode = 1;
+    return null;
+  }
+  return mgr;
+}
+
+/** `agentctx claudemd read` — print the project CLAUDE.md. */
+function runClaudemdRead(): void {
+  const mgr = openClaudemd();
+  if (!mgr) return;
+  logger.info(mgr.read() ?? '');
+}
+
+/** `agentctx claudemd validate` — lint structure, placeholders, and size. */
+function runClaudemdValidate(): void {
+  const mgr = openClaudemd();
+  if (!mgr) return;
+  const result = validateClaudeMd(mgr.read() ?? '', countTokens);
+  logger.info(formatValidation(result));
+  if (result.issues.some((i) => i.severity === 'warning')) process.exitCode = 1;
+}
+
+interface ClaudemdSuggestOptions {
+  apply?: boolean;
+  section?: string;
+}
+
+/** `agentctx claudemd suggest [--apply]` — propose/append facts from memory. */
+function runClaudemdSuggest(options: ClaudemdSuggestOptions): void {
+  const mgr = openClaudemd();
+  if (!mgr) return;
+  const root = process.cwd();
+  const config = loadProjectConfig(root);
+  const project = resolveProjectName(root, config);
+  const content = mgr.read() ?? '';
+  const memories = new MemoryStore().list(project);
+  const set = suggestForClaudeMd(content, memories, { section: options.section });
+
+  if (!options.apply) {
+    logger.info(formatSuggestions(set));
+    return;
+  }
+  if (set.additions.length === 0) {
+    logger.info('nothing to apply — CLAUDE.md already covers stored memory');
+    return;
+  }
+  mgr.write(applySuggestions(content, set));
+  logger.info(`added ${set.additions.length} fact(s) under "## ${set.section}" → ${mgr.filePath}`);
+}
+
+interface ClaudemdEditOptions {
+  body?: string;
+}
+
+/** `agentctx claudemd edit <section> --body <text>` — add/replace a section. */
+function runClaudemdEdit(section: string, options: ClaudemdEditOptions): void {
+  const mgr = openClaudemd();
+  if (!mgr) return;
+  if (options.body === undefined) {
+    logger.error('--body <text> is required');
+    process.exitCode = 1;
+    return;
+  }
+  mgr.write(upsertSection(mgr.read() ?? '', section, options.body));
+  logger.info(`updated section "## ${section}" → ${mgr.filePath}`);
+}
+
 const program = new Command();
 
 program
@@ -724,6 +805,44 @@ chain
   .option('-m, --model <model>', 'model id for the claude executor')
   .action(async (name: string, options: ChainRunOptions): Promise<void> => {
     await runChain(name, options);
+  });
+
+// ---------------------------------------------------------------------------
+// claudemd
+// ---------------------------------------------------------------------------
+
+const claudemd = program.command('claudemd').description('read, lint, and sync the project CLAUDE.md');
+
+claudemd
+  .command('read')
+  .description('print the project CLAUDE.md')
+  .action((): void => {
+    runClaudemdRead();
+  });
+
+claudemd
+  .command('validate')
+  .description('lint CLAUDE.md (missing sections, empty placeholders, size)')
+  .action((): void => {
+    runClaudemdValidate();
+  });
+
+claudemd
+  .command('suggest')
+  .description('propose CLAUDE.md additions from stored memory')
+  .option('--apply', 'write the suggestions into CLAUDE.md')
+  .option('-s, --section <name>', 'target section heading')
+  .action((options: ClaudemdSuggestOptions): void => {
+    runClaudemdSuggest(options);
+  });
+
+claudemd
+  .command('edit')
+  .description('add or replace a section by heading')
+  .argument('<section>', 'section heading (without `## `)')
+  .option('-b, --body <text>', 'section body text')
+  .action((section: string, options: ClaudemdEditOptions): void => {
+    runClaudemdEdit(section, options);
   });
 
 // ---------------------------------------------------------------------------

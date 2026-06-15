@@ -2,7 +2,7 @@
 
 Living log of how AgentCtx is being built: the approach, what's done, and what's open.
 
-Last updated: 2026-06-10
+Last updated: 2026-06-15
 
 ---
 
@@ -144,7 +144,7 @@ tests/             mirrors src/ (13 test files)
   similarity, `memory reindex` backfills. Keyword `LIKE` remains the default. LanceDB / a real
   semantic embedder can replace the layer via the same seam.
 
-### 11. Publish + automated release  ← most recent
+### 11. Publish + automated release
 - Added a public API barrel `src/index.ts` (so `main` resolves) plus `types` and an `exports` map
   (root + `agentctx/mcp` subpath, keeping the MCP SDK out of the main entry).
 - Published to npm as **`@dev-sajjad/agentctx`** — the bare name `agentctx` was rejected as too
@@ -157,6 +157,19 @@ tests/             mirrors src/ (13 test files)
 - JSR evaluated and **skipped**: JSR's "slow types" rule flags every exported Zod schema/const, and
   native `better-sqlite3` can't run on Deno — wrong fit for a Node CLI. `jsr.json` removed.
 
+### 12. CLAUDE.md manager  ← most recent (on `development` branch, unpublished)
+- New `src/claudemd/index.ts`: pure functions `parseClaudeMd` (split on `##`, `###` stays nested),
+  `isPlaceholderBody`, `validateClaudeMd` (missing recommended sections, empty placeholders, oversize,
+  missing title), `suggestForClaudeMd` (durable long/mid memory → bullet additions, skips facts already
+  present), `upsertSection` (add/replace a section, preserves existing heading casing),
+  `applySuggestions` (merge + dedupe), formatters, and a thin `ClaudeMdManager` fs wrapper.
+- CLI `agentctx claudemd read|validate|suggest [--apply]|edit <section> --body`. Existing MCP
+  `claudemd_read` rerouted through `ClaudeMdManager` (no schema change). New MCP `claudemd_suggest`
+  tool deferred pending sign-off (off-limits: ask before touching MCP tool schema).
+- 18 new tests (104 total). Smoke-tested end-to-end in a temp project: validate flags template
+  placeholders, `suggest --apply` writes a "Project facts (AgentCtx)" section from memory, `edit` works.
+- Branching: introduced a `development` branch; features land + verify there, then merge to `main`.
+
 ---
 
 ## Verification (current)
@@ -164,7 +177,7 @@ tests/             mirrors src/ (13 test files)
 | Gate | Result |
 |---|---|
 | `npm run verify` (typecheck + lint + test + build) | green |
-| `npm test` | **86 passing** (13 files) |
+| `npm test` | **104 passing** (14 files) |
 | `npm run build` | 0 errors |
 | npm | **`@dev-sajjad/agentctx@0.1.1`** published via OIDC (provenance) |
 | GitHub | CI green on Node 20 & 22 (`ci.yml`); `publish.yml` on `v*` tags |
@@ -200,7 +213,8 @@ hypothesis being tested.
 
 ## Remaining work (extensions, not blockers)
 
-- CLAUDE.md manager: only `claudemd_read` + the init scaffold exist; `edit`/`validate`/`sync` not built.
+- CLAUDE.md manager: `read`/`validate`/`suggest`/`edit` shipped (§12). Still open: MCP `claudemd_suggest`
+  tool (deferred for sign-off), and `--from-stdin` / section-removal for `edit`.
 - `debug replay` / `debug export`.
 - Remote role-registry install (`role install agentctx/<name>`); today only local `.yaml` paths.
 - Optional vector upgrades: a real semantic embedder (transformers.js) and/or a LanceDB backend —
@@ -228,6 +242,8 @@ node dist/cli/index.js role use backend-engineer
 node dist/cli/index.js compile -t "fix the auth bug"
 node dist/cli/index.js budget -t "fix the auth bug" --history 4000
 node dist/cli/index.js debug diff
+node dist/cli/index.js claudemd validate
+node dist/cli/index.js claudemd suggest --apply
 node dist/cli/index.js chain run feature-build --executor claude --input "add rate limiting"
 ```
 (`npm link` once to get a global `agentctx` command instead of `node dist/cli/index.js`.)
