@@ -102,6 +102,16 @@ export function registerAgentCtxTools(server: McpServer, deps: McpDeps): void {
   );
 
   server.registerTool(
+    'claudemd_suggest',
+    {
+      description:
+        'Propose CLAUDE.md additions drawn from stored memory; with apply=true, write them in',
+      inputSchema: { apply: z.boolean().optional(), section: z.string().optional() },
+    },
+    (args) => h.claudemdSuggest(args),
+  );
+
+  server.registerTool(
     'chain_run',
     { description: 'Run a named agent chain (not yet implemented)', inputSchema: { name: z.string() } },
     (args) => h.chainRun(args),

@@ -1,6 +1,11 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { ClaudeMdManager } from '../claudemd/index.js';
+import {
+  ClaudeMdManager,
+  suggestForClaudeMd,
+  applySuggestions,
+  formatSuggestions,
+} from '../claudemd/index.js';
 import type { MemoryStore } from '../memory/index.js';
 import type { RoleManager } from '../roles/index.js';
 import type { ContextCompiler } from '../compiler/index.js';
@@ -86,6 +91,7 @@ export interface AgentCtxHandlers {
   budgetCheck(args: { task?: string; role?: string; model?: string; history?: number }): CallToolResult;
   debugLast(): CallToolResult;
   claudemdRead(): CallToolResult;
+  claudemdSuggest(args: { apply?: boolean; section?: string }): CallToolResult;
   chainRun(args: { name: string; input?: string }): Promise<CallToolResult>;
 }
 
@@ -173,6 +179,20 @@ export function createHandlers(deps: McpDeps): AgentCtxHandlers {
       const content = mgr.read();
       if (content === null) return errorResult('No CLAUDE.md found in the project root.');
       return text(content);
+    },
+
+    claudemdSuggest(args) {
+      const mgr = new ClaudeMdManager(deps.projectRoot);
+      const content = mgr.read();
+      if (content === null) return errorResult('No CLAUDE.md found in the project root.');
+      const memories = deps.memory.list(deps.project);
+      const set = suggestForClaudeMd(content, memories, args.section ? { section: args.section } : {});
+      if (args.apply) {
+        if (set.additions.length === 0) return text('Nothing to apply — CLAUDE.md already covers stored memory.');
+        mgr.write(applySuggestions(content, set));
+        return text(`Added ${set.additions.length} fact(s) under "## ${set.section}".`);
+      }
+      return text(formatSuggestions(set));
     },
 
     async chainRun(args) {

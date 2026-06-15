@@ -35,7 +35,7 @@ them:
 ### Status
 
 Core is feature-complete and tested (86 tests): memory, roles, context compiler, token budget,
-debug inspector, MCP server (10 tools), and multi-agent chains with real agent execution.
+debug inspector, MCP server (11 tools), and multi-agent chains with real agent execution.
 
 Stack: Node.js 20+, TypeScript (strict, ESM), SQLite (`better-sqlite3`), Commander.js, Zod, tiktoken,
 `@modelcontextprotocol/sdk`, Vitest.
@@ -366,7 +366,7 @@ Library usage) — it pipes the compiled prompt to any command.
 
 ### MCP server
 
-Runs over stdio and exposes 10 tools to Claude Code. See Scenario A to connect it.
+Runs over stdio and exposes 11 tools to Claude Code. See Scenario A to connect it.
 
 | Tool | Does |
 |---|---|
@@ -379,6 +379,7 @@ Runs over stdio and exposes 10 tools to Claude Code. See Scenario A to connect i
 | `budget_check` | compile + return the token breakdown |
 | `debug_last` | full prompt/manifest of the last run |
 | `claudemd_read` | read the project CLAUDE.md |
+| `claudemd_suggest` | propose CLAUDE.md additions from memory (`apply=true` writes them) |
 | `chain_run` | run a named chain (dry-run) |
 
 ```bash

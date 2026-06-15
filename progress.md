@@ -104,7 +104,7 @@ tests/             mirrors src/ (13 test files)
 ### 5. MCP server
 - Verified SDK 1.29 API from installed types (`McpServer.registerTool`, Zod raw-shape inputs;
   zod v4 compatible).
-- `mcp/tools.ts` (10 handlers, no server import) + `mcp/index.ts` (register + `startMcpServer`
+- `mcp/tools.ts` (11 handlers, no server import) + `mcp/index.ts` (register + `startMcpServer`
   over stdio). `shared/config.ts` (loadProjectConfig/resolveProjectName/expiryForLayer), reused
   by CLI. Wired CLI `mcp`. Stdout kept pure JSON-RPC (logging only to stderr in the MCP path).
 
@@ -165,8 +165,8 @@ tests/             mirrors src/ (13 test files)
   `applySuggestions` (merge + dedupe), formatters, and a thin `ClaudeMdManager` fs wrapper.
 - CLI `agentctx claudemd read|validate|suggest [--apply]|edit <section> --body`. Existing MCP
   `claudemd_read` rerouted through `ClaudeMdManager` (no schema change). New MCP `claudemd_suggest`
-  tool deferred pending sign-off (off-limits: ask before touching MCP tool schema).
-- 18 new tests (104 total). Smoke-tested end-to-end in a temp project: validate flags template
+  tool added (preview, or `apply=true` to write) — approved after the off-limits sign-off; 11 MCP tools now.
+- 19 new tests (105 total). Smoke-tested end-to-end in a temp project: validate flags template
   placeholders, `suggest --apply` writes a "Project facts (AgentCtx)" section from memory, `edit` works.
 - Branching: introduced a `development` branch; features land + verify there, then merge to `main`.
 
@@ -177,7 +177,7 @@ tests/             mirrors src/ (13 test files)
 | Gate | Result |
 |---|---|
 | `npm run verify` (typecheck + lint + test + build) | green |
-| `npm test` | **104 passing** (14 files) |
+| `npm test` | **105 passing** (14 files) |
 | `npm run build` | 0 errors |
 | npm | **`@dev-sajjad/agentctx@0.1.1`** published via OIDC (provenance) |
 | GitHub | CI green on Node 20 & 22 (`ci.yml`); `publish.yml` on `v*` tags |
@@ -213,8 +213,8 @@ hypothesis being tested.
 
 ## Remaining work (extensions, not blockers)
 
-- CLAUDE.md manager: `read`/`validate`/`suggest`/`edit` shipped (§12). Still open: MCP `claudemd_suggest`
-  tool (deferred for sign-off), and `--from-stdin` / section-removal for `edit`.
+- CLAUDE.md manager: `read`/`validate`/`suggest`/`edit` + MCP `claudemd_read`/`claudemd_suggest` shipped
+  (§12). Still open: `--from-stdin` / section-removal for `edit`.
 - `debug replay` / `debug export`.
 - Remote role-registry install (`role install agentctx/<name>`); today only local `.yaml` paths.
 - Optional vector upgrades: a real semantic embedder (transformers.js) and/or a LanceDB backend —
@@ -229,10 +229,10 @@ hypothesis being tested.
 ```bash
 npm run build
 claude mcp add agentctx -s user -- node "/Users/sajjadhussain/Development/Agents Context Manager/dist/cli/index.js" mcp
-# then in a session: /mcp   (lists agentctx + 10 tools)
+# then in a session: /mcp   (lists agentctx + 11 tools)
 ```
 Tools: memory_save, memory_search, memory_list, role_list, role_switch, context_compile,
-budget_check, debug_last, claudemd_read, chain_run.
+budget_check, debug_last, claudemd_read, claudemd_suggest, chain_run.
 
 ### Standalone CLI
 ```bash

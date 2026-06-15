@@ -116,6 +116,20 @@ describe('claudemd / chain tools', () => {
     expect(textOf(handlers.claudemdRead())).toContain('use JWT auth on port 3000');
   });
 
+  it('claudemd_suggest proposes new facts and applies them on request', () => {
+    handlers.memorySave({ content: 'Deploy via GitHub Actions on tag push', layer: 'long' });
+    handlers.memorySave({ content: 'use JWT auth on port 3000', layer: 'mid' }); // already in CLAUDE.md
+
+    const preview = textOf(handlers.claudemdSuggest({}));
+    expect(preview).toContain('Deploy via GitHub Actions on tag push');
+    expect(preview).not.toContain('use JWT auth on port 3000'); // already present → skipped
+
+    const applied = handlers.claudemdSuggest({ apply: true });
+    expect(applied.isError).toBeFalsy();
+    expect(textOf(applied)).toContain('Added 1 fact');
+    expect(textOf(handlers.claudemdRead())).toContain('Deploy via GitHub Actions on tag push');
+  });
+
   it('chain_run runs a named chain and errors on an unknown one', async () => {
     mkdirSync(join(root, '.agentctx', 'chains'), { recursive: true });
     writeFileSync(
